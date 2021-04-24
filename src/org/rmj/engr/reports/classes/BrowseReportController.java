@@ -4,7 +4,7 @@
  * @started 2018.11.24
  */
 
-package org.rmj.cas.food.reports.classes;
+package org.rmj.engr.reports.classes;
 
 import java.net.URL;
 import java.sql.ResultSet;

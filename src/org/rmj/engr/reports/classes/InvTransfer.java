@@ -1,10 +1,10 @@
 /**
- * Waste Inventory Reports Main Class
+ * Inventory Transfer Reports Main Class
  * @author Michael T. Cuison
- * @started 2019.06.07
+ * @started 2019.06.08
  */
 
-package org.rmj.cas.food.reports.classes;
+package org.rmj.engr.reports.classes;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -36,18 +36,18 @@ import org.rmj.appdriver.agentfx.ShowMessageFX;
 import org.rmj.appdriver.iface.GReport;
 import org.rmj.replication.utility.LogWrapper;
 
-public class InvWaste implements GReport{
+public class InvTransfer implements GReport{
     private GRider _instance;
     private boolean _preview = true;
     private String _message = "";
     private LinkedList _rptparam = null;
     private JasperPrint _jrprint = null;
-    private LogWrapper logwrapr = new LogWrapper("org.rmj.foodreports.classes.InvWaste", "InvWasteReport.log");
+    private LogWrapper logwrapr = new LogWrapper("org.rmj.foodreports.classes.InvTransfer", "InvTransferReport.log");
     
     private double xOffset = 0; 
     private double yOffset = 0;
     
-    public InvWaste(){
+    public InvTransfer(){
         _rptparam = new LinkedList();
         _rptparam.add("store.report.id");
         _rptparam.add("store.report.no");
@@ -80,6 +80,7 @@ public class InvWaste implements GReport{
         fxmlLoader.setLocation(getClass().getResource("DateCriteria.fxml"));
 
         DateCriteriaController instance = new DateCriteriaController();
+        instance.setGrider(_instance);
         instance.singleDayOnly(false);
         
         try {
@@ -121,7 +122,8 @@ public class InvWaste implements GReport{
             System.setProperty("store.report.criteria.presentation", "1");
             System.setProperty("store.report.criteria.datefrom", instance.getDateFrom());
             System.setProperty("store.report.criteria.datethru", instance.getDateTo());
-            System.setProperty("store.report.criteria.branch", "");
+            System.setProperty("store.report.criteria.branch", instance.getProjFrom());
+            System.setProperty("store.report.criteria.destinat", instance.getProjTo());
             System.setProperty("store.report.criteria.group", "");
             return true;
         }
@@ -220,8 +222,18 @@ public class InvWaste implements GReport{
             lsCondition = "a.dTransact BETWEEN " + lsDate;
         } else lsCondition = "0=1";
         
-        System.out.println(MiscUtil.addCondition(getReportSQL(), lsCondition));
-        ResultSet rs = _instance.executeQuery(MiscUtil.addCondition(getReportSQL(), lsCondition));
+        String lsSQL = MiscUtil.addCondition(getReportSQL(), lsCondition);
+        
+        if (!System.getProperty("store.report.criteria.branch").isEmpty()){
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.sBranchCd = " + SQLUtil.toSQL(System.getProperty("store.report.criteria.branch")));
+        }
+        
+        if (!System.getProperty("store.report.criteria.destinat").isEmpty()){
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.sDestinat = " + SQLUtil.toSQL(System.getProperty("store.report.criteria.destinat")));
+        }
+        
+        System.out.println(lsSQL);
+        ResultSet rs = _instance.executeQuery(lsSQL);
         
         //Convert the data-source to JasperReport data-source
         JRResultSetDataSource jrRS = new JRResultSetDataSource(rs);
@@ -267,8 +279,8 @@ public class InvWaste implements GReport{
                     ", b.nInvCostx `lField01`" +
                     ", a.sTransNox `sField03`" +
                     ", DATE_FORMAT(a.dTransact, '%M %d, %Y') `sField04`" +
-                " FROM Inv_Waste_Master a" +
-                    ", Inv_Waste_Detail b" +
+                " FROM Inv_Transfer_Master a" +
+                    ", Inv_Transfer_Detail b" +
                         " LEFT JOIN Inventory c" +
                             " ON b.sStockIDx = c.sStockIDx" +
                         " LEFT JOIN Model d" +

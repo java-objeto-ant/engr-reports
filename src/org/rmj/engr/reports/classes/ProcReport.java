@@ -4,7 +4,7 @@
  * @started 2018.11.26
  */
 
-package org.rmj.cas.food.reports.classes;
+package org.rmj.engr.reports.classes;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

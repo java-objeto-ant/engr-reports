@@ -4,7 +4,7 @@
  * @started 2019.06.07
  */
 
-package org.rmj.cas.food.reports.classes;
+package org.rmj.engr.reports.classes;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -36,18 +36,18 @@ import org.rmj.appdriver.agentfx.ShowMessageFX;
 import org.rmj.appdriver.iface.GReport;
 import org.rmj.replication.utility.LogWrapper;
 
-public class PurchaseOrder implements GReport{
+public class Purchases implements GReport{
     private GRider _instance;
     private boolean _preview = true;
     private String _message = "";
     private LinkedList _rptparam = null;
     private JasperPrint _jrprint = null;
-    private LogWrapper logwrapr = new LogWrapper(this.getClass().getName(), "PurchaseOrder.log");
+    private LogWrapper logwrapr = new LogWrapper(this.getClass().getName(), "Purchases.log");
     
     private double xOffset = 0; 
     private double yOffset = 0;
     
-    public PurchaseOrder(){
+    public Purchases(){
         _rptparam = new LinkedList();
         _rptparam.add("store.report.id");
         _rptparam.add("store.report.no");
@@ -114,6 +114,7 @@ public class PurchaseOrder implements GReport{
             stage.setScene(scene);
             stage.showAndWait();
         } catch (IOException e) {
+            e.printStackTrace();
             ShowMessageFX.Error(e.getMessage(), DailyProduction.class.getSimpleName(), "Please inform MIS Department.");
             System.exit(1);
         }
@@ -328,13 +329,13 @@ public class PurchaseOrder implements GReport{
                     ", a.sReferNox `sField05`" +
                     ", h.sProjDesc `sField06`" +
                     ", a.sRemarksx `sField07`" +
-                    ", DATE_FORMAT(a.dTransact, '%Y-%m-%d') `sField08`" +
-                " FROM PO_Master a" +
+                    ", DATE_FORMAT(a.dRefernce, '%Y-%m-%d') `sField08`" +
+                " FROM PO_Receiving_Master a" +
                         " LEFT JOIN Client_Master g" + 
                             " ON a.sSupplier = g.sClientID" + 
                         " LEFT JOIN Project h" +
                             " ON a.sBranchCd = h.sProjCode" +
-                    ", PO_Detail b" +
+                    ", PO_Receiving_Detail b" +
                         " LEFT JOIN Inventory c" +
                             " ON b.sStockIDx = c.sStockIDx" +
                         " LEFT JOIN Model d" +
@@ -352,30 +353,30 @@ public class PurchaseOrder implements GReport{
     
     private String getReportSQLSum(){
         return "SELECT" +
-                    " g.sClientNm `sField03`" + 
-                    ", a.sReferNox `sField05`" + 
-                    ", h.sProjDesc `sField06`" + 
-                    ", DATE_FORMAT(a.dTransact, '%Y-%m-%d') `sField08`" + 
-                    ", SUM(b.nQuantity * b.nUnitPrce) `lField02`" + 
-                " FROM PO_Master a" +  
-                        " LEFT JOIN Project  h" +  
-                            " ON a.sBranchCd = h.sProjCode" +  
-                    ", Client_Master g" + 
-                    ", PO_Detail b" + 
-                        " LEFT JOIN Inventory c" +  
-                            " ON b.sStockIDx = c.sStockIDx" +  
-                        " LEFT JOIN Model d" +  
-                            " ON c.sModelCde = d.sModelCde" +  
-                        " LEFT JOIN Brand e" +  
-                            " ON c.sBrandCde = e.sBrandCde" +  
-                        " LEFT JOIN Measure f" +  
-                            " ON c.sMeasurID = f.sMeasurID" +  
-                " WHERE a.sTransNox = b.sTransNox" +  
-                    " AND a.`sSupplier` = g.`sClientID`" + 
+                    " g.sClientNm `sField03`" +
+                    ", a.sReferNox `sField05`" +
+                    ", h.sProjDesc `sField06`" +
+                    ", DATE_FORMAT(a.dTransact, '%Y-%m-%d') `sField08`" +
+                    ", SUM(b.nQuantity * b.nUnitPrce) `lField02`" +
+                " FROM PO_Receiving_Master a" + 
+                        " LEFT JOIN Project h" + 
+                            " ON a.sBranchCd = h.sProjCode" + 
+                    ", Client_Master g" +
+                    ", PO_Receiving_Detail b" + 
+                        " LEFT JOIN Inventory c" + 
+                                " ON b.sStockIDx = c.sStockIDx" + 
+                        " LEFT JOIN Model d" + 
+                                " ON c.sModelCde = d.sModelCde" + 
+                        " LEFT JOIN Brand e" + 
+                                " ON c.sBrandCde = e.sBrandCde" + 
+                        " LEFT JOIN Measure f" + 
+                                " ON c.sMeasurID = f.sMeasurID" + 
+                " WHERE a.sTransNox = b.sTransNox" + 
+                    " AND a.`sSupplier` = g.`sClientID`" +
                     " AND LEFT(a.sTransNox, 4) = " + SQLUtil.toSQL(_instance.getBranchCode()) + 
                     " AND a.sBranchCd = " + SQLUtil.toSQL(System.getProperty("store.report.criteria.branch")) +
-                    " AND a.cTranStat <> '3'" +  
-                " GROUP BY sField05, sField03" +   
+                    " AND a.cTranStat <> '3'" + 
+                " GROUP BY sField05, sField03" +
                 " ORDER BY sField08, sField03, sField05, sField06";
     }
 }

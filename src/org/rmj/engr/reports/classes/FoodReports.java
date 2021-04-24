@@ -4,7 +4,7 @@
  * @started 2018.11.24
  */
 
-package org.rmj.cas.food.reports.classes;
+package org.rmj.engr.reports.classes;
 
 import javafx.application.Application;
 import javafx.event.EventHandler;
@@ -61,7 +61,7 @@ public class FoodReports extends Application {
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.setTitle("Standard Reports");
-        stage.getIcons().add(new Image("org/rmj/cas/food/reports/resources/ic_launcher1.png"));
+        stage.getIcons().add(new Image("org/rmj/engr/reports/resources/ic_launcher1.png"));
         stage.showAndWait();
         
         if (!instance.isCancelled()){
