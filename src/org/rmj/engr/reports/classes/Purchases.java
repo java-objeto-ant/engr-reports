@@ -318,49 +318,73 @@ public class Purchases implements GReport{
     }
     
     private String getReportSQL(){
-        return "SELECT" +
-                    "  c.sBarCodex `sField01`" +
-                    ", CONCAT(c.sDescript, IF(IFNULL(d.sDescript, '') = '', '', CONCAT(' / ', d.sDescript)), IF(IFNULL(e.sDescript, '') = '', '', CONCAT(' / ', e.sDescript)), IF(IFNULL(f.sMeasurNm, '') = '', '', CONCAT(' / ', f.sMeasurNm))) `sField02`" +
-                    ", b.nQuantity `nField01`" +
-                    ", b.nUnitPrce `lField01`" +
-                    ", b.nQuantity * b.nUnitPrce `lField02`" +
-                    ", DATE_FORMAT(a.dTransact, '%Y-%m-%d') `sField04`" +
-                    ", g.sClientNm `sField03`" + 
-                    ", a.sReferNox `sField05`" +
-                    ", h.sProjDesc `sField06`" +
-                    ", a.sRemarksx `sField07`" +
-                    ", DATE_FORMAT(a.dRefernce, '%Y-%m-%d') `sField08`" +
-                " FROM PO_Receiving_Master a" +
-                        " LEFT JOIN Client_Master g" + 
-                            " ON a.sSupplier = g.sClientID" + 
-                        " LEFT JOIN Project h" +
-                            " ON a.sBranchCd = h.sProjCode" +
-                    ", PO_Receiving_Detail b" +
-                        " LEFT JOIN Inventory c" +
-                            " ON b.sStockIDx = c.sStockIDx" +
-                        " LEFT JOIN Model d" +
-                            " ON c.sModelCde = d.sModelCde" + 
-                        " LEFT JOIN Brand e" + 
-                            " ON c.sBrandCde = e.sBrandCde" + 
-                        " LEFT JOIN Measure f" +
-                            " ON c.sMeasurID = f.sMeasurID" + 
-                " WHERE a.sTransNox = b.sTransNox" +                
-                    " AND LEFT(a.sTransNox, 4) = " + SQLUtil.toSQL(_instance.getBranchCode()) + 
-                    " AND a.sBranchCd = " + SQLUtil.toSQL(System.getProperty("store.report.criteria.branch")) +
-                    " AND a.cTranStat <> '3'" + 
-                " ORDER BY sField03, sField05, sField06, sField07, sField08, sField02";
+        String lsSQL = "SELECT" +
+                            "  c.sBarCodex `sField01`" +
+                            ", CONCAT(c.sDescript, IF(IFNULL(d.sDescript, '') = '', '', CONCAT(' / ', d.sDescript)), IF(IFNULL(e.sDescript, '') = '', '', CONCAT(' / ', e.sDescript)), IF(IFNULL(f.sMeasurNm, '') = '', '', CONCAT(' / ', f.sMeasurNm))) `sField04`" +
+                            ", b.nQuantity `nField01`" +
+                            ", b.nUnitPrce `lField03`" +
+                            ", b.nQuantity * b.nUnitPrce `lField02`" +
+                            ", DATE_FORMAT(a.dRefernce, '%Y-%m-%d') `sField08`" +
+                            ", g.sClientNm `sField03`" + 
+                            ", a.sReferNox `sField05`" +
+                            ", h.sProjDesc `sField06`" +
+                            ", i.sProjDesc `sField02`" +
+                            ", a.sRemarksx `sField07`" +
+                            ", CASE" +
+                                " WHEN a.cTranStat = '0' THEN 'OPEN'" +
+                                " WHEN a.cTranStat = '1' THEN 'APPROVED'" +
+                                " WHEN a.cTranStat = '2' THEN 'POSTED'" +
+                                " WHEN a.cTranStat = '3' THEN 'CANCELLED'" +
+                                " WHEN a.cTranStat = '4' THEN 'VOID'" +
+                            " END `sField09`" +
+                        " FROM PO_Receiving_Master a" +
+                                " LEFT JOIN Client_Master g" + 
+                                    " ON a.sSupplier = g.sClientID" + 
+                                " LEFT JOIN Project h" +
+                                    " ON a.sBranchCd = h.sProjCode" +
+                                " LEFT JOIN Project i" +
+                                    " ON LEFT(a.sTransNox, 4) = i.sProjCode" +
+                            ", PO_Receiving_Detail b" +
+                                " LEFT JOIN Inventory c" +
+                                    " ON b.sStockIDx = c.sStockIDx" +
+                                " LEFT JOIN Model d" +
+                                    " ON c.sModelCde = d.sModelCde" + 
+                                " LEFT JOIN Brand e" + 
+                                    " ON c.sBrandCde = e.sBrandCde" + 
+                                " LEFT JOIN Measure f" +
+                                    " ON c.sMeasurID = f.sMeasurID" + 
+                        " WHERE a.sTransNox = b.sTransNox" +                
+                            " AND LEFT(a.sTransNox, 4) = " + SQLUtil.toSQL(_instance.getBranchCode()) + 
+                            " AND a.cTranStat <> '3'" + 
+                        " ORDER BY sField03, sField05, sField06, sField07, sField08, sField02"; 
+        
+        if (!System.getProperty("store.report.criteria.branch").equals("")){
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.sBranchCd = " + SQLUtil.toSQL(System.getProperty("store.report.criteria.branch")));
+        }
+        
+        return lsSQL;
     }
     
     private String getReportSQLSum(){
-        return "SELECT" +
-                    " g.sClientNm `sField03`" +
-                    ", a.sReferNox `sField05`" +
-                    ", h.sProjDesc `sField06`" +
-                    ", DATE_FORMAT(a.dTransact, '%Y-%m-%d') `sField08`" +
-                    ", SUM(b.nQuantity * b.nUnitPrce) `lField02`" +
+        String lsSQL = "SELECT" +
+                        "  g.sClientNm `sField03`" +
+                        ", a.sReferNox `sField05`" +
+                        ", i.sProjDesc `sField02`" +
+                        ", h.sProjDesc `sField06`" +
+                        ", DATE_FORMAT(a.dTransact, '%Y-%m-%d') `sField08`" +
+                        ", a.nTranTotl - ((a.nTranTotl * a.nDiscount / 100) - a.nAddDiscx) `lField02`" +
+                        ", CASE" +
+                                " WHEN a.cTranStat = '0' THEN 'OPEN'" +
+                                " WHEN a.cTranStat = '1' THEN 'APPROVED'" +
+                                " WHEN a.cTranStat = '2' THEN 'POSTED'" +
+                                " WHEN a.cTranStat = '3' THEN 'CANCELLED'" +
+                                " WHEN a.cTranStat = '4' THEN 'VOID'" +
+                            " END `sField01`" +
                 " FROM PO_Receiving_Master a" + 
                         " LEFT JOIN Project h" + 
                             " ON a.sBranchCd = h.sProjCode" + 
+                        " LEFT JOIN Project i" + 
+                            " ON LEFT(a.sTransNox, 4) = i.sProjCode" + 
                     ", Client_Master g" +
                     ", PO_Receiving_Detail b" + 
                         " LEFT JOIN Inventory c" + 
@@ -374,9 +398,14 @@ public class Purchases implements GReport{
                 " WHERE a.sTransNox = b.sTransNox" + 
                     " AND a.`sSupplier` = g.`sClientID`" +
                     " AND LEFT(a.sTransNox, 4) = " + SQLUtil.toSQL(_instance.getBranchCode()) + 
-                    " AND a.sBranchCd = " + SQLUtil.toSQL(System.getProperty("store.report.criteria.branch")) +
                     " AND a.cTranStat <> '3'" + 
                 " GROUP BY sField05, sField03" +
                 " ORDER BY sField08, sField03, sField05, sField06";
+        
+        if (!System.getProperty("store.report.criteria.branch").equals("")){
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.sBranchCd = " + SQLUtil.toSQL(System.getProperty("store.report.criteria.branch")));
+        }
+        
+        return lsSQL;
     }
 }
