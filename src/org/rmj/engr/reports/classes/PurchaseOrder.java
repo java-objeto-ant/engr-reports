@@ -319,34 +319,38 @@ public class PurchaseOrder implements GReport{
     private String getReportSQL(){
         String lsSQL = "SELECT" +
                             "  c.sBarCodex `sField01`" +
-                            ", CONCAT(c.sDescript, IF(IFNULL(d.sDescript, '') = '', '', CONCAT(' / ', d.sDescript)), IF(IFNULL(e.sDescript, '') = '', '', CONCAT(' / ', e.sDescript)), IF(IFNULL(f.sMeasurNm, '') = '', '', CONCAT(' / ', f.sMeasurNm))) `sField02`" +
+                            ", CONCAT(c.sDescript, IF(IFNULL(d.sDescript, '') = '', '', CONCAT(' / ', d.sDescript)), IF(IFNULL(e.sDescript, '') = '', '', CONCAT(' / ', e.sDescript)), IF(IFNULL(f.sMeasurNm, '') = '', '', CONCAT(' / ', f.sMeasurNm))) `sField04`" +
                             ", b.nQuantity `nField01`" +
-                            ", b.nUnitPrce `lField01`" +
+                            ", b.nUnitPrce `lField03`" +
                             ", b.nQuantity * b.nUnitPrce `lField02`" +
-                            ", DATE_FORMAT(a.dTransact, '%Y-%m-%d') `sField04`" +
-                            ", g.sClientNm `sField03`" + 
+                            ", g.sClientNm `sField03`" +
                             ", a.sReferNox `sField05`" +
                             ", h.sProjDesc `sField06`" +
+                            ", i.sProjDesc `sField02`" +
                             ", a.sRemarksx `sField07`" +
                             ", DATE_FORMAT(a.dTransact, '%Y-%m-%d') `sField08`" +
-                        " FROM PO_Master a" +
+                            ", b.nReceived `nField02`" +
+                        " FROM" +
+                            " PO_Master a" + 
                                 " LEFT JOIN Client_Master g" + 
-                                    " ON a.sSupplier = g.sClientID" + 
-                                " LEFT JOIN Project h" +
-                                    " ON a.sBranchCd = h.sProjCode" +
-                            ", PO_Detail b" +
-                                " LEFT JOIN Inventory c" +
-                                    " ON b.sStockIDx = c.sStockIDx" +
-                                " LEFT JOIN Model d" +
-                                    " ON c.sModelCde = d.sModelCde" + 
+                                   " ON a.sSupplier = g.sClientID" + 
+                                " LEFT JOIN Project h" + 
+                                   " ON a.sBranchCd = h.sProjCode" +
+                                " LEFT JOIN Project i" +
+                                    " ON LEFT(a.sTransNox, 4) = i.sProjCode" +
+                            ", PO_Detail b" + 
+                                " LEFT JOIN Inventory c" + 
+                                   " ON b.sStockIDx = c.sStockIDx" + 
+                                " LEFT JOIN Model d" + 
+                                   " ON c.sModelCde = d.sModelCde" + 
                                 " LEFT JOIN Brand e" + 
-                                    " ON c.sBrandCde = e.sBrandCde" + 
-                                " LEFT JOIN Measure f" +
-                                    " ON c.sMeasurID = f.sMeasurID" + 
+                                   " ON c.sBrandCde = e.sBrandCde" + 
+                                " LEFT JOIN Measure f" + 
+                                   " ON c.sMeasurID = f.sMeasurID" + 
                         " WHERE a.sTransNox = b.sTransNox" +                
                             " AND LEFT(a.sTransNox, 4) = " + SQLUtil.toSQL(_instance.getBranchCode()) + 
                             " AND a.cTranStat <> '3'" + 
-                        " ORDER BY sField03, sField05, sField06, sField07, sField08, sField02";
+                        " ORDER BY sField08, sField05, sField02, sField06, sField03, sField04";
         
         if (!System.getProperty("store.report.criteria.branch").equals("")){
             lsSQL = MiscUtil.addCondition(lsSQL, "a.sBranchCd = " + SQLUtil.toSQL(System.getProperty("store.report.criteria.branch")));
@@ -357,7 +361,7 @@ public class PurchaseOrder implements GReport{
     
     private String getReportSQLSummary(){
         String lsSQL = "SELECT" +
-                    " g.sClientNm `sField03`" + 
+                    "  g.sClientNm `sField03`" + 
                     ", a.sReferNox `sField05`" + 
                     ", h.sProjDesc `sField06`" + 
                     ", DATE_FORMAT(a.dTransact, '%Y-%m-%d') `sField08`" + 
@@ -369,9 +373,12 @@ public class PurchaseOrder implements GReport{
                         " WHEN a.cTranStat = '3' THEN 'CANCELLED'" +
                         " WHEN a.cTranStat = '4' THEN 'VOID'" +
                     " END `sField01`" +
+                    ", i.sProjDesc `sField02`" +
                 " FROM PO_Master a" +  
                         " LEFT JOIN Project  h" +  
-                            " ON a.sBranchCd = h.sProjCode" +  
+                            " ON a.sBranchCd = h.sProjCode" +
+                        " LEFT JOIN Project i" +
+                            " ON LEFT(a.sTransNox, 4) = i.sProjCode" +
                     ", Client_Master g" + 
                     ", PO_Detail b" + 
                         " LEFT JOIN Inventory c" +  
